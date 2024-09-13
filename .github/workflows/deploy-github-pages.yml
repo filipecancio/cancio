@@ -1,0 +1,44 @@
+name: Deploy website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pages: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: 11
+
+      - name: Give execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build WasmJsBrowserDistribution
+        run: ./gradlew wasmJsBrowserDistribution
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          name: 'github-pages'
+          path: 'composeApp/build/dist/wasmJs/productionExecutable'
+
+      - name: Deploy artifact
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: 'github-pages'
+          folder: 'composeApp/build/dist/wasmJs/productionExecutable'
+          publish_dir: '.'
